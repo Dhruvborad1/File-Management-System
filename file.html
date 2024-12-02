@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Management System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<style>/* Basic Reset */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+    }
+    
+    .container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        width: 80%;
+        max-width: 600px;
+        text-align: center;
+    }
+    
+    /* File upload section */
+    .upload-section {
+        margin-bottom: 30px;
+    }
+    
+    input[type="file"] {
+        margin: 10px 0;
+    }
+    
+    button {
+        padding: 10px 20px;
+        border: none;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    
+    button:hover {
+        background-color: #45a049;
+    }
+    
+    /* File list section */
+    .file-list {
+        margin-top: 20px;
+    }
+    
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    
+    li {
+        background-color: #eeebeb;
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    li button {
+        background-color: #ff4d4d;
+        border: none;
+        color: white;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    li button:hover {
+        background-color: #e60000;
+    }
+    
+    .download-btn {
+        background-color: #007BFF;
+         margin-left: auto;
+    }
+    
+    .download-btn:hover {
+        background-color: #0056b3;
+    }
+    </style>
+<body>
+    <div class="container">
+        <h1>File Management System</h1>
+
+        <!-- File Upload Form -->
+        <div class="upload-section">
+            <h2>Upload a File</h2>
+            <input type="file" id="file-input" multiple>
+            <button onclick="uploadFiles()">Upload</button>
+        </div>
+
+        <!-- Display uploaded files -->
+        <div class="file-list">
+            <h2>Uploaded Files</h2>
+            <ul id="file-list"></ul>
+        </div>
+    </div>
+
+    <script>
+// Get references to HTML elements
+const fileInput = document.getElementById('file-input');
+const fileList = document.getElementById('file-list');
+
+// Function to handle file uploads
+function uploadFiles() {
+    const files = fileInput.files;
+
+    // If no files are selected, do nothing
+    if (files.length === 0) {
+        alert('Please select files to upload.');
+        return;
+    }
+
+    // Loop through each file and display it in the list
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Create a list item for the uploaded file
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${file.name} (${file.size} bytes)</span>
+            <button class="download-btn" onclick="downloadFile('${file.name}')">Download</button>
+            <button onclick="deleteFile(this)">Delete</button>
+        `;
+        
+        // Append the list item to the file list
+        fileList.appendChild(li);
+
+        // Save the file in localStorage (for persistence across page reloads)
+        saveFile(file);
+    }
+
+    // Clear the input after uploading files
+    fileInput.value = '';
+}
+
+// Function to delete a file
+function deleteFile(button) {
+    const li = button.parentElement;  // Get the list item
+    const fileName = li.querySelector('span').textContent.split(' ')[0];  // Extract the file name
+
+    // Remove the list item from the UI
+    li.remove();
+
+    // Remove the file from localStorage
+    removeFile(fileName);
+}
+
+// Function to download a file
+function downloadFile(fileName) {
+    // Find the file in localStorage
+    const fileData = localStorage.getItem(fileName);
+    
+    if (fileData) {
+        const file = new Blob([fileData], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.download = fileName;
+        link.click();
+    } else {
+        alert('File not found.');
+    }
+}
+
+// Function to save a file to localStorage
+function saveFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        localStorage.setItem(file.name, e.target.result);  // Store the file data in localStorage
+    };
+    reader.readAsArrayBuffer(file);  // Read the file as binary data
+}
+
+// Function to remove a file from localStorage
+function removeFile(fileName) {
+    localStorage.removeItem(fileName);  // Remove the file data from localStorage
+}
+
+// Load files from localStorage when the page loads
+window.onload = function() {
+    for (let i = 0; i < localStorage.length; i++) {
+        const fileName = localStorage.key(i);
+        const fileData = localStorage.getItem(fileName);
+        
+        if (fileData) {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${fileName}</span>
+                <button class="download-btn" onclick="downloadFile('${fileName}')">Download</button>
+                <button onclick="deleteFile(this)">Delete</button>
+            `;
+            fileList.appendChild(li);
+        }
+    }
+};
+
+    </script>
+</body>
+</html>
